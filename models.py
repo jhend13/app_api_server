@@ -1,11 +1,14 @@
 from datetime import datetime
+from typing import List
 from sqlalchemy import DateTime
 from sqlalchemy import BigInteger
 from sqlalchemy import String
 from sqlalchemy import func
+from sqlalchemy import ForeignKey
 from sqlalchemy.orm import DeclarativeBase
 from sqlalchemy.orm import Mapped
 from sqlalchemy.orm import mapped_column
+from sqlalchemy.orm import relationship
 from .db import Base
 
 class User(Base):
@@ -15,4 +18,12 @@ class User(Base):
     firebase_uid: Mapped[str] = mapped_column(String(128), unique=True)
     name: Mapped[str] = mapped_column(String(50))
     created_at: Mapped[DateTime] = mapped_column(DateTime, server_default=func.current_timestamp())
+    locations: Mapped[List['Location']] = relationship(back_populates='user')
 
+class Location(Base):
+    __tablename__ = 'locations'
+
+    id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
+    user_id: Mapped[int] = mapped_column(ForeignKey('users.id'))
+    user: Mapped['User'] = relationship(back_populates='locations')
+    full_address: Mapped[String] = mapped_column(String(200))
