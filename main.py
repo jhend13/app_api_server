@@ -14,6 +14,7 @@ from sqlalchemy.orm import Session
 from sqlalchemy.exc import IntegrityError
 from .db import engine, SessionLocal
 from .fb import test_send
+from .ride_handler import RideService
 
 # models.Base.metadata.drop_all(bind=engine)
 models.Base.metadata.create_all(engine)
@@ -28,6 +29,8 @@ def get_db():
 
 
 SessionDep = Annotated[Session, Depends(get_db)]
+
+ride_service = RideService()
 
 app = FastAPI()
 
@@ -82,6 +85,7 @@ def create_user(request: schemas.UserCreate, db: SessionDep):
 async def websocket_endpoint(websocket: WebSocket):
     await websocket.accept()
     while True:
-        data = await websocket.receive_text()
-        print('message received was: {data}')
-        await websocket.send_text(f'Message text was: {data}')
+        data = await websocket.receive_json()
+        ride_service.process_message(data)
+        print(f'Message received was: {data}')
+        # await websocket.send_text(f'Message received was: {data}')
