@@ -3,9 +3,11 @@ from firebase_admin import credentials
 from firebase_admin import messaging
 
 # Firebase setup
-# should use the recommended way of utilizing the GOOGLE_APPLICATION_CREDENTIALS environvar
-cred = credentials.Certificate(
-    'C:\\Users\\jhend\\keys\\aadd-be709-firebase-adminsdk-ouy5k-f31c82021f.json')
+# should use the recommended way of utilizing the GOOGLE_APPLICATION_CREDENTIALS environment variable
+#cred = credentials.Certificate(
+#    'C:\\Users\\jhend\\keys\\aadd-be709-firebase-adminsdk-ouy5k-f31c82021f.json')
+    cred = credentials.Certificate(
+    'C:\\Users\\StratoFI\\Desktop\\aadd\\aadd-be709-firebase-adminsdk-ouy5k-7cb89298b7.json')
 app = firebase_admin.initialize_app(cred)
 
 print(app.project_id)
