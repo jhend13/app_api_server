@@ -1,10 +1,11 @@
-
 from fastapi import WebSocket
 from enum import Enum
 
+# must match client action type
+
 
 class ActionTypes(Enum):
-    REGISTER_CLIENT = 'registerClient'
+    AUTHENTICATE = 'authenticate'
     SERVICE_STATE = 'serviceState'
     ROUTE_CONFIRM = 'routeConfirm'
     RIDE_START = 'rideStart'
@@ -12,28 +13,34 @@ class ActionTypes(Enum):
 
 
 class RideService():
-    driver_pool = 23
+    def __init__(self):
+        self.available_drivers = 0
+        self.connections: dict[WebSocket, int | None] = {}
 
-    # to determine: how should this be indexed? by user id?
-    # should it be a list? or a dict for unqiue 1-1?
-    websockets = {}
+    async def connect(self, websocket: WebSocket):
+        await websocket.accept()
+        print('Client connected')
+        self.connections[websocket] = None
+        await self.send_message(websocket, ActionTypes.AUTHENTICATE)
 
-    def on_connect(self, user_id):
-        pass
+    def disconnect(self, websocket):
+        print(f'{self.connections[websocket]} disconnected.')
+        del self.connections[websocket]
 
-    def on_disconnect(self, user_id):
-        pass
-
-    def process_message(self, user_id, data):
+    def process_message(self, data, websocket):
         action = ActionTypes(data['action'])
+
+        print(f'Message received: {action}')
 
         match action:
             case ActionTypes.SERVICE_STATE:
-                self.send_message()
+                self.send_message(websocket, ActionTypes.AUTHENTICATE)
 
-    def send_message(self, user_id, action_type: ActionTypes, data=None):
+    async def send_message(self, websocket, action_type: ActionTypes, data=None):
         payload = {
             'action': action_type.value,
             'data': data
         }
-        self.websockets[user_id].send_json(payload)
+        print(f'Sending payload: {payload}')
+        await websocket.send_json(payload)
+        # self.websockets[user_id].send_json(payload)

@@ -4,8 +4,6 @@ from fastapi import WebSocket
 from fastapi.responses import HTMLResponse
 from fastapi import HTTPException
 from fastapi import Depends
-from fastapi import Path
-from fastapi import Query
 import firebase_admin.messaging
 from . import schemas
 from . import models
@@ -83,9 +81,11 @@ def create_user(request: schemas.UserCreate, db: SessionDep):
 
 @app.websocket('/ws')
 async def websocket_endpoint(websocket: WebSocket):
-    await websocket.accept()
-    while True:
-        data = await websocket.receive_json()
-        ride_service.process_message(data)
+    await ride_service.connect(websocket)
+
+    async for data in websocket.iter_json():
+        ride_service.process_message(data, websocket)
         print(f'Message received was: {data}')
-        # await websocket.send_text(f'Message received was: {data}')
+
+    # WebSocketDisconnect raised
+    ride_service.disconnect(websocket)
