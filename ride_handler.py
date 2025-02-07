@@ -1,5 +1,6 @@
 from fastapi import WebSocket
 from enum import Enum
+from .ride_queue import RideQueue
 
 # must match client action type
 
@@ -16,6 +17,7 @@ class RideService():
     def __init__(self):
         self.available_drivers = 0
         self.connections: dict[WebSocket, int | None] = {}
+        self.ride_pool = RideQueue()
 
     async def connect(self, websocket: WebSocket):
         await websocket.accept()
