@@ -4,15 +4,21 @@ from fastapi import WebSocket
 from fastapi.responses import HTMLResponse
 from fastapi import HTTPException
 from fastapi import Depends
-import firebase_admin.messaging
+import firebase_admin.auth
 from . import schemas
 from . import models
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import IntegrityError
 from .db import engine, SessionLocal
-from .fb import test_send
+# from .fb import test_send
 from .ride_handler import RideService
+from firebase_admin import initialize_app, auth, credentials
+
+# should use the recommended way of utilizing the GOOGLE_APPLICATION_CREDENTIALS environment variable
+cred = firebase_admin.credentials.Certificate(
+    'C:\\Users\\jhend\\keys\\aadd-be709-firebase-adminsdk-ouy5k-f31c82021f.json')
+app = firebase_admin.initialize_app(cred)
 
 # models.Base.metadata.drop_all(bind=engine)
 models.Base.metadata.create_all(engine)
@@ -82,6 +88,13 @@ def create_user(request: schemas.UserCreate, db: SessionDep):
 @app.websocket('/ws')
 async def websocket_endpoint(websocket: WebSocket):
     await ride_service.connect(websocket)
+
+    try:
+        decoded_token = auth.verify_id_token(
+            websocket.headers['authorization'])
+    except auth.InvalidIdTokenError:
+        await websocket.close()
+        return
 
     async for data in websocket.iter_json():
         ride_service.process_message(data, websocket)
