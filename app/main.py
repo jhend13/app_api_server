@@ -3,10 +3,9 @@ from fastapi import WebSocket
 from firebase_admin import initialize_app, auth, credentials
 from app.core.db import engine
 import app.routers as routers
-from app.routers.user import router
 from app.models import Base
-# from app.routers.user import router as UserRouter
-from app.services.ride.ride_handler import RideService
+from app.services.ride import User
+from app.services.ride import RideService
 
 
 # should use the recommended way of utilizing the GOOGLE_APPLICATION_CREDENTIALS environment variable
@@ -40,9 +39,11 @@ async def websocket_endpoint(websocket: WebSocket):
         await websocket.close()
         return
 
+    user = User(decoded_token['uid'], decoded_token['email'])
+    ride_service.user_authenticated(websocket, user)
+
     async for data in websocket.iter_json():
         ride_service.process_message(data, websocket)
-        print(f'Message received was: {data}')
 
     # WebSocketDisconnect raised
     ride_service.disconnect(websocket)
